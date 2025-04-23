@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Notes App</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        
+        .note-input {
+            margin-bottom: 20px;
+        }
+        
+        #noteText {
+            width: 100%;
+            height: 100px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            resize: vertical;
+        }
+        
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        
+        button:hover {
+            background-color: #45a049;
+        }
+        
+        .notes-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        
+        .note {
+            background-color: white;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        
+        .note p {
+            margin: 0;
+            word-wrap: break-word;
+        }
+        
+        .delete-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background-color: #f44336;
+            color: white;
+            border: none;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        
+        .timestamp {
+            font-size: 12px;
+            color: #888;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Simple Notes App</h1>
+    
+    <div class="note-input">
+        <textarea id="noteText" placeholder="Write your note here..."></textarea>
+        <button id="addNoteBtn">Add Note</button>
+        <button id="clearAllBtn">Clear All</button>
+    </div>
+    
+    <div class="notes-container" id="notesContainer">
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const noteText = document.getElementById('noteText');
+            const addNoteBtn = document.getElementById('addNoteBtn');
+            const clearAllBtn = document.getElementById('clearAllBtn');
+            const notesContainer = document.getElementById('notesContainer');
+            
+            loadNotes();
+            
+            addNoteBtn.addEventListener('click', addNote);
+            
+            noteText.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.ctrlKey && !e.metaKey) {
+                    e.preventDefault();
+                    addNote();
+                }
+            });
+            
+            clearAllBtn.addEventListener('click', clearAllNotes);
+            
+            function addNote() {
+                const text = noteText.value.trim();
+                if (text === '') return;
+                
+                const note = {
+                    id: Date.now(),
+                    text: text,
+                    timestamp: new Date().toLocaleString()
+                };
+                
+                saveNote(note);
+                displayNote(note);
+                noteText.value = '';
+            }
+            
+            function displayNote(note) {
+                const noteElement = document.createElement('div');
+                noteElement.className = 'note';
+                noteElement.innerHTML = `
+                    <button class="delete-btn" data-id="${note.id}">×</button>
+                    <p>${note.text.replace(/\n/g, '<br>')}</p>
+                    <div class="timestamp">${note.timestamp}</div>
+                `;
+                notesContainer.prepend(noteElement);
+                
+                
+                noteElement.querySelector('.delete-btn').addEventListener('click', function() {
+                    deleteNote(note.id);
+                    noteElement.remove();
+                });
+            }
+            
+            function saveNote(note) {
+                const notes = getNotes();
+                notes.push(note);
+                localStorage.setItem('notes', JSON.stringify(notes));
+            }
+            
+            function loadNotes() {
+                const notes = getNotes();
+                notes.forEach(note => displayNote(note));
+            }
+            
+            function getNotes() {
+                return JSON.parse(localStorage.getItem('notes') || '[]');
+            }
+            
+            function deleteNote(id) {
+                const notes = getNotes().filter(note => note.id !== id);
+                localStorage.setItem('notes', JSON.stringify(notes));
+            }
+            
+            function clearAllNotes() {
+                if (confirm('Are you sure you want to delete all notes?')) {
+                    localStorage.removeItem('notes');
+                    notesContainer.innerHTML = '';
+                }
+            }
+        });
+    </script>
+</body>
+</html>
